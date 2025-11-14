@@ -266,6 +266,26 @@ class WurTomatoData(Dataset):
         ve.vis(pc = self.S_gt.get_xyz_pointcloud(), colors=colours)
 
 
+    def create_images_giphy(self):
+        # Loop to rotate and capture frames
+        n_frames = 36
+        for i in range(n_frames):
+            angle_deg = i * (360 / n_frames)
+            # Set view by rotating around z axis
+            # Example: rotate camera around the z-axis at a fixed radius
+            radius = 1  # Adjust as needed
+            center = np.mean(self.S_gt.get_xyz_pointcloud(), axis=0)
+            angle_rad = np.deg2rad(angle_deg)
+            camera_position = center + radius * np.array([np.cos(angle_rad), np.sin(angle_rad), 0.5])
+            up_dir = np.array([0, 0, 1])
+            ps.look_at_dir(camera_location=camera_position, target=center, up_dir=up_dir)
+
+            # Draw the scene and save a screenshot
+            ps.screenshot(f"frames/frame_{i:03d}.png", transparent_bg=False)
+
+        # Optional: close viewer
+        ps.clear_user_callback()
+
     def visualise_skeleton(self, index, parent_nodes_only=True):
         print(f'Visualising skeleton {self.dataset[index]["file_name"].stem}')
         self.__load_graph(index)

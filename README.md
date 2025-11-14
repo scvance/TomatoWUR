@@ -37,6 +37,12 @@ Settings are described in config file
     </p>
 </center>
 
+<center>
+    <p align="center">
+        <img src="Resources/pointcloud.gif" height="200" />
+    </p>
+</center>
+
 ## Citation
 ```
 @article{VANMARREWIJK2025111852,
