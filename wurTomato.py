@@ -83,8 +83,10 @@ class WurTomatoData(Dataset):
     obj.run_skeletonisation(visualise=False)
     """
 
+
     def __init__(self, **kwargs):
         config_data = config.Config("config.yaml")
+        self.url = "data.4tu.nl/ndownloader/items/e2c59841-4653-45de-a75e-4994b2766a2f/versions/1"
 
         # self._set_attributes(config_data)
         self.__dict__.update(config_data.__dict__)
