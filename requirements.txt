@@ -9,5 +9,9 @@ scipy
 scikit-learn
 matplotlib
 ipykernel
+
 open3d
-opencv_python
+pybind11
+plyfile
+datatable
+opencv-python
