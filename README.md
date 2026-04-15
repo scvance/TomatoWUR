@@ -29,6 +29,54 @@ For more examples have a look at the example_notebook.ipynb
 
 Settings are described in config file
 
+## Training Bundles In 2D-to-3D_segmentation
+This dataset repo is also used as a submodule inside the parent
+`2D-to-3D_segmentation` project for Pointcept experiments.
+
+That project generates non-destructive training bundles under:
+
+`data/TomatoWUR/ann_versions/<version-name>/`
+
+For the original frame-wise partial data, the bundle contains:
+
+- `json/train.json`
+- `json/val.json`
+- `json/test.json`
+
+For the newer trajectory experiments, the same builder also writes:
+
+- `json/train_trajectories.json`
+- `json/val_trajectories.json`
+- `json/test_trajectories.json`
+
+Those trajectory manifests preserve frame order inside each trajectory so the
+loader can expose sequence boundaries to a future recurrent model.
+
+Example command from the parent repo with Docker Compose:
+
+```bash
+docker compose -f ../docker-compose.yaml run --rm \
+  -v /path/to/TomatoWUR_trajectory:/data/TomatoWUR_trajectory \
+  interactive python3 /workspace/plant3d/TomatoWUR/data/TomatoWUR/build_partial_ann_version.py \
+  --annotations-root /data/TomatoWUR_trajectory/annotations_trajectory_sensor \
+  --point-clouds-root /data/TomatoWUR_trajectory/point_clouds_trajectory_sensor \
+  --version-name trajectory-sensor-plant \
+  --pairing-mode strict \
+  --split-unit plant \
+  --sequence-delimiter _sensor_ \
+  --train-ratio 0.8 \
+  --val-ratio 0.1 \
+  --test-ratio 0.1 \
+  --seed 123 \
+  --materialize-mode copy \
+  --dry-run
+```
+
+Use `--split-unit plant` for sequential experiments so all trajectories from
+the same plant stay in the same split. Detailed path conventions and usage are
+documented in `data/README.txt` in this repo and in the parent project
+`readme.md`.
+
 <center>
     <p align="center">
         <img src="Resources/3D_tomato_plant.png" height="200" />

@@ -250,6 +250,140 @@ and should reference:
 inside the partial-v1 json folder.
 
 ###############################################################################
+Trajectory-aware bundles for sequential training
+###############################################################################
+
+The same builder can also generate trajectory-aware bundles for sequential
+experiments where one plant contains multiple ordered partial point clouds.
+
+Expected source layout:
+
+~/TomatoWUR_trajectory/
+|- annotations_trajectory_sensor/
+|  |- Harvest_01_PotNr_55/
+|  |  |- Harvest_01_PotNr_55_traj000_sensor_0000_labels.csv
+|  |  |- Harvest_01_PotNr_55_traj000_sensor_0001_labels.csv
+|  |  `- ...
+|  `- ...
+`- point_clouds_trajectory_sensor/
+   |- Harvest_01_PotNr_55/
+   |  |- Harvest_01_PotNr_55_traj000_sensor_0000.csv
+   |  |- Harvest_01_PotNr_55_traj000_sensor_0001.csv
+   |  `- ...
+   `- ...
+
+Trajectory naming assumptions:
+
+- plant folder names must match between the two roots
+- frame stems must match between the two roots
+- the frame index is parsed from the suffix after `_sensor_`
+- the sequence id is the prefix before `_sensor_`
+- example:
+  `Harvest_01_PotNr_55_traj000_sensor_0007`
+  becomes sequence id:
+  `Harvest_01_PotNr_55_traj000`
+
+Recommended split mode for future LSTM experiments:
+
+- `--split-unit plant`
+
+This keeps every trajectory from the same plant in the same split. The script
+also supports:
+
+- `--split-unit sequence`
+
+That keeps each trajectory intact, but different trajectories from the same
+plant may appear in different splits.
+
+Recommended workflow in Docker:
+
+1. Validate the dataset without writing output:
+
+docker compose -f ~/2D-to-3D_segmentation/docker-compose.yaml run --rm \
+  -v /path/to/TomatoWUR_trajectory:/data/TomatoWUR_trajectory \
+  interactive python3 /workspace/plant3d/TomatoWUR/data/TomatoWUR/build_partial_ann_version.py \
+  --annotations-root /data/TomatoWUR_trajectory/annotations_trajectory_sensor \
+  --point-clouds-root /data/TomatoWUR_trajectory/point_clouds_trajectory_sensor \
+  --version-name trajectory-sensor-plant \
+  --pairing-mode strict \
+  --split-unit plant \
+  --sequence-delimiter _sensor_ \
+  --train-ratio 0.8 \
+  --val-ratio 0.1 \
+  --test-ratio 0.1 \
+  --seed 123 \
+  --materialize-mode copy \
+  --dry-run
+
+2. If the dry run is clean, remove `--dry-run` and rerun the same command.
+
+Equivalent local command if you prefer the repo virtualenv:
+
+source ~/.virtualenvs/tomato/bin/activate
+python ~/2D-to-3D_segmentation/TomatoWUR/data/TomatoWUR/build_partial_ann_version.py \
+  --annotations-root ~/TomatoWUR_trajectory/annotations_trajectory_sensor \
+  --point-clouds-root ~/TomatoWUR_trajectory/point_clouds_trajectory_sensor \
+  --version-name trajectory-sensor-plant \
+  --pairing-mode strict \
+  --split-unit plant \
+  --sequence-delimiter _sensor_ \
+  --train-ratio 0.8 \
+  --val-ratio 0.1 \
+  --test-ratio 0.1 \
+  --seed 123 \
+  --materialize-mode copy
+
+source ~/.virtualenvs/tomato/bin/activate
+python ~/2D-to-3D_segmentation/TomatoWUR/data/TomatoWUR/build_partial_ann_version.py \
+  --annotations-root ~/TomatoWUR_trajectory/annotations_trajectory_world \
+  --point-clouds-root ~/TomatoWUR_trajectory/point_clouds_trajectory_world \
+  --version-name trajectory-world-plant \
+  --pairing-mode strict \
+  --split-unit plant \
+  --sequence-delimiter _ \
+  --train-ratio 0.8 \
+  --val-ratio 0.1 \
+  --test-ratio 0.1 \
+  --seed 123 \
+  --materialize-mode copy
+
+The generated bundle contains the existing frame-wise manifests:
+
+- json/all.json
+- json/train.json
+- json/val.json
+- json/test.json
+
+and these trajectory-specific files:
+
+- json/all_trajectories.json
+- json/train_trajectories.json
+- json/val_trajectories.json
+- json/test_trajectories.json
+- json/train_units.txt
+- json/val_units.txt
+- json/test_units.txt
+- json/train_plants.txt
+- json/val_plants.txt
+- json/test_plants.txt
+- metadata.json
+
+The trajectory manifests preserve frame order inside each trajectory. In the
+current repo, the trajectory training path uses one trajectory per batch and
+marks the first and last frame of each sequence so a recurrent module can reset
+state cleanly when it is added later.
+
+The trajectory config in this repo is:
+
+~/2D-to-3D_segmentation/example_configs/semseg-pt-v3m1-0-base_TOMATOWUR_TRAJECTORY.py
+
+and it expects:
+
+- train_trajectories.json
+- val_trajectories.json
+- test_trajectories.json
+
+###############################################################################
 Licence
 ###############################################################################
 
